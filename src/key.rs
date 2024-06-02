@@ -14,12 +14,16 @@ pub(crate) enum Key {
     Integer {
         i: i64
     },
+    BigInt {
+        i: i128
+    },
     Number {
         n: f64
     },
 }
 
 impl Key {
+    /// The field is data
     pub(crate) fn new(field: &str, field_def: &Field) -> Result<Key, anyhow::Error> {
         match field_def.field_type() {
             FieldType::String => {
@@ -54,6 +58,18 @@ impl Key {
                     }
                 )
             }
+            FieldType::BigInt => {
+                let mut key = i128::from_str(field.trim())?;
+                if field_def.random() {
+                    key = rand::random::<i128>()
+                }
+
+                Ok(
+                    Key::BigInt {
+                        i: key
+                    }
+                )
+            }
             FieldType::Number => {
                 let mut key = f64::from_str(field.trim())?;
                 if field_def.random() {
@@ -75,7 +91,7 @@ impl Key {
             Key::Integer { .. } => {
                 None
             }
-            Key::Number { .. } => {
+            Key::Number { .. } | Key::BigInt {..} => {
                 None
             }
         }
@@ -87,6 +103,26 @@ impl Key {
                 None
             }
             Key::Integer { i } => {
+                Some(*i)
+            }
+            Key::BigInt { .. } => {
+                None
+            }
+            Key::Number { .. } => {
+                None
+            }
+        }
+    }
+
+    fn as_bigint(&self) -> Option<i128> {
+        match self {
+            Key::String { .. } => {
+                None
+            }
+            Key::Integer { .. } => {
+                None
+            }
+            Key::BigInt { i } => {
                 Some(*i)
             }
             Key::Number { .. } => {
@@ -103,6 +139,9 @@ impl Key {
             Key::Integer { .. } => {
                 None
             }
+            Key::BigInt { .. } => {
+                None
+            }
             Key::Number { n } => {
                 Some(*n)
             }
@@ -117,6 +156,7 @@ impl PartialEq<Self> for Key {
         match self {
             Key::String { s } => { s.eq(other.as_str().unwrap()) }
             Key::Integer { i } => { i.eq(&other.as_integer().unwrap()) }
+            Key::BigInt { i } => { i.eq(&other.as_bigint().unwrap()) }
             Key::Number { n } => { n.eq(&other.as_number().unwrap()) }
         }
     }
@@ -133,6 +173,7 @@ impl Ord for Key {
         match self {
             Key::String { s } => { s.as_str().cmp(other.as_str().unwrap()) }
             Key::Integer { i } => { i.cmp(&other.as_integer().unwrap()) }
+            Key::BigInt { i } => { i.cmp(&other.as_bigint().unwrap()) }
             Key::Number { n } => {
                 if n.is_nan() && other.as_number().unwrap().is_nan() {
                     Ordering::Equal

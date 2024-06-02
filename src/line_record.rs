@@ -28,7 +28,8 @@ impl LineRecord {
             )
         } else {
             let mut keys: Vec<Key> = Vec::new();
-            let parts: Vec<&str> = line.split(field_separator).collect();
+            //let parts: Vec<&str> = line.split(field_separator).collect(); // TODO  split only needed.
+            let first = line.split_once(field_separator);
             let mut error = None;
             for field in fields {
                 if field.index() == 0 {
@@ -39,18 +40,20 @@ impl LineRecord {
                     );
                     break;
                 }
-                if field.index() > parts.len() {
+               // if field.index() > parts.len() {
+                if first.is_none(){
                     error = Some(
                         anyhow!(
                             "Requested comparison for field {} but there are only {} fields using {} as field separator.",
                             field.index(),
-                            parts.len(),
+                            0,
                             field_separator,
                        )
                     );
                     break;
                 }
-                keys.push(Key::new(parts[field.index() - 1], field)?)
+                // keys.push(Key::new(parts[field.index() - 1], field)?)
+                keys.push(Key::new(first.unwrap().0, field)?)
             }
             if let Some(e) = error {
                 Err(anyhow!("line: {line}, error: {e}"))

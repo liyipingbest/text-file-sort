@@ -511,6 +511,8 @@ impl Sort {
 
         for path in input_files {
             for chunk in ChunkIterator::new(path, config.chunk_size_bytes(), config.endl()).unwrap() {
+                // let p = chunk.path().display();
+                // println!("sort chunks {p},offset={},length={}",chunk.offset(),chunk.length());
                 let sort_command = Box::new(SortCommand::new(Some(chunk)));
                 sorting_pool.submit(sort_command);
             }

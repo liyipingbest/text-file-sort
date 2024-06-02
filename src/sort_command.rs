@@ -3,6 +3,7 @@ use std::cmp::{max, Reverse};
 use std::collections::BinaryHeap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, Seek, SeekFrom, Write};
+use std::time::Instant;
 
 use anyhow::{anyhow, Context};
 use command_executor::command::Command;
@@ -99,11 +100,21 @@ impl SortCommand {
 impl Command for SortCommand {
     fn execute(&self) -> Result<(), anyhow::Error> {
         let config = get_tl_config();
+        let now = Instant::now();
         let mut chunk = self.read_records()?;
+        let raw_chunk = self.chunk.as_ref().unwrap().offset();
+        let read_cost = now.elapsed().as_micros() as f64 /1000.0;
+        println!("read line {raw_chunk} cost {read_cost} ms");
+        let now = Instant::now();
         chunk.sort();
+        let sort_cost = now.elapsed().as_micros() as f64 /1000.0;
+        println!("sort line {raw_chunk} cost {sort_cost} ms");
+
         SORTED_FILES.with(
             |sorted_files| {
                 let chunk_size = chunk.len();
+
+                let now = Instant::now();
 
                 if sorted_files.borrow().len() < config.files() / config.tasks() {
                     Self::write_sorted_chunk(sorted_files, chunk, chunk_size, &config);
@@ -117,6 +128,10 @@ impl Command for SortCommand {
                     sorted_files.borrow_mut().push(Reverse(merged));
                     Self::write_sorted_chunk(sorted_files, chunk, chunk_size, &config);
                 }
+
+                let write_cost = now.elapsed().as_micros() as f64 /1000.0;
+                println!("write line {raw_chunk} cost {write_cost} ms");
+
                 Ok::<(), anyhow::Error>(())
             }
         )?;
