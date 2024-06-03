@@ -101,12 +101,12 @@ impl Command for SortCommand {
     fn execute(&self) -> Result<(), anyhow::Error> {
         let config = get_tl_config();
         // let now = Instant::now();
-        let chunk = self.read_records()?;
+        let mut chunk = self.read_records()?;
         // let raw_chunk = self.chunk.as_ref().unwrap().offset();
         // let read_cost = now.elapsed().as_micros() as f64 /1000.0;
         // println!("read line {raw_chunk} cost {read_cost} ms");
         // let now = Instant::now();
-        // chunk.sort();
+        chunk.sort();
         // let sort_cost = now.elapsed().as_micros() as f64 /1000.0;
         // println!("sort line {raw_chunk} cost {sort_cost} ms");
 
