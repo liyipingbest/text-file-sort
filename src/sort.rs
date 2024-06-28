@@ -473,17 +473,20 @@ impl Sort {
                     unmerged_files.push(current_min)
                 }
             }
-            let mut current_min = unmerged_files.pop().unwrap();
-            loop {
-                if let Some(line_record) = current_min.line_record() {
-                    let line = line_record.line();
-                    merged_writer.write_all(line.as_bytes())?;
-                    merged_len += 1;
-                } else {
-                    std::fs::remove_file(current_min.path())?;
-                    break;
+            let current_min_option = unmerged_files.pop();
+            if let Some(mut current_min)  = current_min_option{
+                loop {
+                    if let Some(line_record) = current_min.line_record() {
+                        let line = line_record.line();
+                        merged_writer.write_all(line.as_bytes())?;
+                        merged_len += 1;
+                    } else {
+                        std::fs::remove_file(current_min.path())?;
+                        break;
+                    }
                 }
             }
+
 
             log::info!("Finished merging sorted files, thread: {}, merged length: {} lines", thread::current().name().unwrap_or("unnamed"), merged_len);
         }
